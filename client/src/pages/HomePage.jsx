@@ -10,22 +10,26 @@ import {
   ArrowRight,
   MapPin,
   Clock,
-  CheckCircle2,
-  QrCode,
-  Award
+  QrCode
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Card, CardBody } from "../components/ui/Card";
 import { ProgressBar } from "../components/ui/ProgressBar";
-import { MOCK_EVENTS } from "../data/mockData";
+import { useEvents } from "../hooks/useEvents";
 
 export function HomePage() {
-  const featuredEvents = MOCK_EVENTS.filter((e) => e.featured);
+  // Global Context consumption via useEvents custom hook
+  const { events, stats } = useEvents();
+
+  // Dynamically derive featured approved events from global context
+  const featuredEvents = events
+    .filter((e) => (e.featured || e.approvalStatus === "APPROVED") && e.status !== "CANCELLED")
+    .slice(0, 3);
 
   return (
     <div className="space-y-16 pb-16">
-      {/* Hero Section */}
+      {/* Hero Section - India-First Product Messaging */}
       <section className="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white pt-16 pb-20 overflow-hidden">
         {/* Subtle decorative grid background */}
         <div className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
@@ -33,15 +37,15 @@ export function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" /> Next-Gen Event & Venue Ecosystem
+              <Sparkles className="w-3.5 h-3.5" /> India&apos;s Smart Event & Venue Ecosystem
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Create, Discover & Experience <span className="text-indigo-400">Smart Events</span>
+              Discover, Organize & Experience <span className="text-indigo-400">Events Across India</span>
             </h1>
 
             <p className="text-lg text-slate-300 leading-relaxed">
-              EventSphere provides a unified platform for organizers to publish events and reserve venues, while participants enjoy seamless registration, instant QR tickets, and verified certificates.
+              EventSphere powers colleges, developer communities, and organizers across Mumbai, Pune, Bengaluru & Delhi NCR with seamless registrations, double-booking protected venues, and instant QR entry passes.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -51,8 +55,12 @@ export function HomePage() {
                 </Button>
               </Link>
               <Link to="/venues">
-                <Button variant="outline" size="lg" className="bg-slate-800/80 border-slate-700 text-white hover:bg-slate-700">
-                  Explore Venues
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="bg-slate-800/80 border-slate-700 text-white hover:bg-slate-700"
+                >
+                  Explore Partner Venues
                 </Button>
               </Link>
             </div>
@@ -60,7 +68,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Platform Stats */}
+      {/* Platform Stats Connected to Context */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <Card className="bg-white p-6 shadow-md border-slate-200/80">
@@ -69,8 +77,8 @@ export function HomePage() {
                 <Calendar className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-slate-900">180+</p>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Events Hosted</p>
+                <p className="text-2xl font-extrabold text-slate-900">{stats.totalEvents}+</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Events Listed</p>
               </div>
             </div>
           </Card>
@@ -81,7 +89,9 @@ export function HomePage() {
                 <Users className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-slate-900">1,400+</p>
+                <p className="text-2xl font-extrabold text-slate-900">
+                  {stats.totalAttendees.toLocaleString("en-IN")}+
+                </p>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Attendees</p>
               </div>
             </div>
@@ -93,7 +103,7 @@ export function HomePage() {
                 <Building className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-slate-900">24</p>
+                <p className="text-2xl font-extrabold text-slate-900">{stats.totalVenues}</p>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Partner Venues</p>
               </div>
             </div>
@@ -106,7 +116,7 @@ export function HomePage() {
               </div>
               <div>
                 <p className="text-2xl font-extrabold text-slate-900">99.8%</p>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Satisfaction Rate</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Verified Check-in Rate</p>
               </div>
             </div>
           </Card>
@@ -118,8 +128,12 @@ export function HomePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <Badge variant="primary" className="mb-2">FEATURED SELECTION</Badge>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Upcoming High-Impact Events</h2>
-            <p className="text-slate-600 text-sm mt-1">Explore trending technological summits, design masterclasses, and Expos.</p>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              Upcoming High-Impact Events
+            </h2>
+            <p className="text-slate-600 text-sm mt-1">
+              Explore trending technology summits, college hackathons, design workshops, and career bootcamps.
+            </p>
           </div>
           <Link to="/events">
             <Button variant="outline" size="sm" className="gap-1.5">
@@ -156,7 +170,9 @@ export function HomePage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{evt.date} • {evt.time}</span>
+                    <span>
+                      {evt.date} • {evt.time}
+                    </span>
                   </div>
 
                   <ProgressBar value={evt.registered} max={evt.capacity} />
@@ -164,7 +180,7 @@ export function HomePage() {
 
                 <div className="pt-2 flex items-center justify-between">
                   <span className="text-base font-extrabold text-slate-900">
-                    {evt.price === 0 ? "Free Registration" : `$${evt.price.toFixed(2)}`}
+                    {evt.price === 0 ? "Free Entry" : `₹${evt.price.toLocaleString("en-IN")}`}
                   </span>
                   <Link to={`/events/${evt.id}`}>
                     <Button variant="primary" size="sm">View Details</Button>
@@ -180,9 +196,11 @@ export function HomePage() {
       <section className="bg-slate-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">Built for All Platform Stakeholders</h2>
+            <h2 className="text-3xl font-extrabold text-white tracking-tight">
+              Built for Indian Campus & Tech Communities
+            </h2>
             <p className="text-slate-400 text-sm">
-              EventSphere cleanly separates responsibilities while creating a frictionless workflow between Admins, Organizers, and Participants.
+              EventSphere cleanly separates responsibilities while creating a frictionless workflow between College Admins, Community Organizers, and Student Participants.
             </p>
           </div>
 
@@ -193,9 +211,12 @@ export function HomePage() {
               </div>
               <h3 className="text-lg font-bold text-white">Admin Control Center</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Approve or reject events, manage user permissions, oversee venue listings, and analyze platform-wide registration metrics.
+                Approve or reject college and corporate event listings, prevent double bookings on auditoriums, and monitor state-wide registration metrics.
               </p>
-              <Link to="/dashboard/admin" className="inline-flex text-xs font-semibold text-purple-400 hover:text-purple-300 gap-1 items-center">
+              <Link
+                to="/dashboard/admin"
+                className="inline-flex text-xs font-semibold text-purple-400 hover:text-purple-300 gap-1 items-center"
+              >
                 Preview Admin Dashboard →
               </Link>
             </Card>
@@ -204,11 +225,14 @@ export function HomePage() {
               <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
                 <Calendar className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-white">Organizer Suite</h3>
+              <h3 className="text-lg font-bold text-white">Organizer Workspace</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Publish events, prevent venue double-bookings, track live seat capacity, and verify attendee QR codes at event entry.
+                Publish tech summits and cultural fests, reserve campus labs and convention halls, track live seat capacity, and scan QR passes at entry.
               </p>
-              <Link to="/dashboard/organizer" className="inline-flex text-xs font-semibold text-indigo-400 hover:text-indigo-300 gap-1 items-center">
+              <Link
+                to="/dashboard/organizer"
+                className="inline-flex text-xs font-semibold text-indigo-400 hover:text-indigo-300 gap-1 items-center"
+              >
                 Preview Organizer Suite →
               </Link>
             </Card>
@@ -219,9 +243,12 @@ export function HomePage() {
               </div>
               <h3 className="text-lg font-bold text-white">Participant Experience</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Seamless one-click registrations, digital pass generation with unique QR ticket codes, and automatic certificate eligibility.
+                One-click registration for hackathons and workshops, instant digital passes with unique QR ticket codes, and automatic certificate eligibility.
               </p>
-              <Link to="/dashboard/participant" className="inline-flex text-xs font-semibold text-emerald-400 hover:text-emerald-300 gap-1 items-center">
+              <Link
+                to="/dashboard/participant"
+                className="inline-flex text-xs font-semibold text-emerald-400 hover:text-emerald-300 gap-1 items-center"
+              >
                 Preview Participant View →
               </Link>
             </Card>

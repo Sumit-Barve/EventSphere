@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Code2, Globe, Shield, Heart } from "lucide-react";
+import { Calendar, Code2, Globe } from "lucide-react";
 
 export function Footer() {
   return (

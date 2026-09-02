@@ -10,8 +10,6 @@ import {
   X,
   Bell,
   ChevronRight,
-  LogOut,
-  Sliders,
   Building,
   Home
 } from "lucide-react";

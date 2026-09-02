@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { EventProvider } from "./context/EventContext";
 import { MainLayout } from "./layouts/MainLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 
@@ -14,27 +15,29 @@ import { ParticipantDashboard } from "./pages/dashboards/ParticipantDashboard";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Main Site Routes */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="events" element={<EventsPage />} />
-          <Route path="events/:id" element={<EventDetailPage />} />
-          <Route path="venues" element={<VenuesPage />} />
-        </Route>
+    <EventProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Main Site Routes */}
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="events" element={<EventsPage />} />
+            <Route path="events/:id" element={<EventDetailPage />} />
+            <Route path="venues" element={<VenuesPage />} />
+          </Route>
 
-        {/* Dashboard Shell Routes (Separated role pages with shared DashboardLayout) */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="/dashboard/participant" replace />} />
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="organizer" element={<OrganizerDashboard />} />
-          <Route path="participant" element={<ParticipantDashboard />} />
-        </Route>
+          {/* Dashboard Shell Routes (Separated role pages with shared DashboardLayout) */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="/dashboard/participant" replace />} />
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="organizer" element={<OrganizerDashboard />} />
+            <Route path="participant" element={<ParticipantDashboard />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </EventProvider>
   );
 }

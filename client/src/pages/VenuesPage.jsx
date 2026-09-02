@@ -1,5 +1,5 @@
 import React from "react";
-import { Building, MapPin, Users, CheckCircle2, ShieldCheck } from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Card, CardBody } from "../components/ui/Card";
@@ -9,8 +9,10 @@ export function VenuesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Partner Venues</h1>
-        <p className="text-sm text-slate-600">Browse verified convention centers, lab spaces, and auditoriums with built-in double-booking protection.</p>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Partner Venues Across India</h1>
+        <p className="text-sm text-slate-600">
+          Browse verified college auditoriums, innovation labs, and convention centres across Mumbai, Pune & Maharashtra with built-in double-booking protection.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -18,10 +20,11 @@ export function VenuesPage() {
           <Card key={venue.id} hoverable className="flex flex-col">
             <div className="relative h-48 bg-slate-100 overflow-hidden">
               <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" />
-              <div className="absolute top-3 left-3">
+              <div className="absolute top-3 left-3 flex gap-2">
                 <Badge variant={venue.status === "AVAILABLE" ? "success" : "warning"}>
                   {venue.status}
                 </Badge>
+                <Badge variant="primary">{venue.type}</Badge>
               </div>
             </div>
 
@@ -34,8 +37,11 @@ export function VenuesPage() {
               </div>
 
               <div className="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                  <Users className="w-4 h-4 text-indigo-600" /> Seating Capacity: {venue.capacity} Persons
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                    <Users className="w-4 h-4 text-indigo-600" /> Capacity: {venue.capacity} Pax
+                  </span>
+                  <span className="font-bold text-slate-900 text-xs">{venue.pricing}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {venue.facilities.map((fac) => (

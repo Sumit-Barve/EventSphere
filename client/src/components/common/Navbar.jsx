@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Menu, X, LayoutDashboard, Shield, UserCheck, Ticket } from "lucide-react";
+import { Calendar, Menu, X, Shield, UserCheck, Ticket } from "lucide-react";
 import { Button } from "../ui/Button";
 
 export function Navbar() {

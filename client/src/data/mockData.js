@@ -1,6 +1,7 @@
 export const MOCK_EVENTS = [
   {
     id: "evt-101",
+    organizerId: "org-001",
     title: "India AI & Full Stack Summit 2026",
     category: "Technology",
     city: "Mumbai",
@@ -22,6 +23,7 @@ export const MOCK_EVENTS = [
   },
   {
     id: "evt-102",
+    organizerId: "org-001",
     title: "Mumbai UI/UX DesignMatrix Masterclass",
     category: "Design",
     city: "Mumbai",
@@ -43,6 +45,7 @@ export const MOCK_EVENTS = [
   },
   {
     id: "evt-103",
+    organizerId: "org-002",
     title: "HackMaharashtra 2026: 36-Hour Hackathon",
     category: "Hackathons",
     city: "Pune",
@@ -64,6 +67,7 @@ export const MOCK_EVENTS = [
   },
   {
     id: "evt-104",
+    organizerId: "org-003",
     title: "Bengaluru CloudNative & DevOps Conclave",
     category: "Technology",
     city: "Bengaluru",
@@ -85,6 +89,7 @@ export const MOCK_EVENTS = [
   },
   {
     id: "evt-105",
+    organizerId: "org-001",
     title: "Campus Placement & DSA Sprint Bootcamp",
     category: "Career",
     city: "Mumbai",
@@ -106,6 +111,7 @@ export const MOCK_EVENTS = [
   },
   {
     id: "evt-106",
+    organizerId: "org-004",
     title: "Indian Startup & Founder Pitch Conclave",
     category: "Startups",
     city: "Mumbai",
@@ -127,6 +133,7 @@ export const MOCK_EVENTS = [
   },
   {
     id: "evt-107",
+    organizerId: "org-002",
     title: "CyberSecShield India: Ethical Hacking Workshop",
     category: "Cybersecurity",
     city: "Delhi NCR",

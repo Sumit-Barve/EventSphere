@@ -20,11 +20,11 @@ import { useEvents } from "../hooks/useEvents";
 
 export function HomePage() {
   // Global Context consumption via useEvents custom hook
-  const { events, stats } = useEvents();
+  const { approvedEvents, stats } = useEvents();
 
   // Dynamically derive featured approved events from global context
-  const featuredEvents = events
-    .filter((e) => (e.featured || e.approvalStatus === "APPROVED") && e.status !== "CANCELLED")
+  const featuredEvents = approvedEvents
+    .filter((e) => e.status !== "CANCELLED")
     .slice(0, 3);
 
   return (

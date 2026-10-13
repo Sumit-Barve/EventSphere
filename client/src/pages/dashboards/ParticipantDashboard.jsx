@@ -8,7 +8,7 @@ import { useEvents } from "../../hooks/useEvents";
 
 export function ParticipantDashboard() {
   // Global Context consumption (useContext) via useEvents hook
-  const { registrations } = useEvents();
+  const { registrations, cancelRegistration } = useEvents();
 
   // Local state for modal preview of selected QR ticket (useState)
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -25,7 +25,12 @@ export function ParticipantDashboard() {
 
       {/* Ticket List Cards */}
       <div className="space-y-4">
-        <h2 className="text-base font-bold text-slate-900">My Registered Event Passes</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-900">
+            My Registered Event Passes ({registrations.length})
+          </h2>
+          <span className="text-xs text-slate-400 font-medium">Instant QR verification enabled</span>
+        </div>
 
         {registrations.length === 0 ? (
           <Card className="p-8 text-center text-slate-500 text-xs">
@@ -34,38 +39,48 @@ export function ParticipantDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {registrations.map((reg) => (
-              <Card key={reg.id} className="p-5 border-l-4 border-l-indigo-600 space-y-4">
-                <div className="flex items-center justify-between">
-                  <Badge variant="primary">DIGITAL PASS</Badge>
-                  <Badge variant={reg.status === "CONFIRMED" ? "success" : "default"}>
-                    {reg.status}
-                  </Badge>
+              <Card key={reg.id} className="p-5 border-l-4 border-l-indigo-600 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="primary">DIGITAL PASS</Badge>
+                    <Badge variant={reg.status === "CONFIRMED" ? "success" : "default"}>
+                      {reg.status}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-base font-bold text-slate-900">{reg.eventTitle}</h3>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" /> {reg.venue}
+                    </p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" /> Date: {reg.eventDate}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold text-slate-900">{reg.eventTitle}</h3>
-                  <p className="text-xs text-slate-500 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" /> {reg.venue}
-                  </p>
-                  <p className="text-xs text-slate-500 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" /> Date: {reg.eventDate}
-                  </p>
-                </div>
-
-                <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                <div className="pt-3 flex items-center justify-between border-t border-slate-100 gap-2">
                   <div>
                     <p className="text-[10px] uppercase font-bold text-slate-400">Ticket Code</p>
                     <p className="text-xs font-mono font-bold text-slate-800">{reg.ticketCode}</p>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                    onClick={() => setSelectedTicket(reg)}
-                  >
-                    <QrCode className="w-4 h-4" /> View QR Ticket
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => cancelRegistration(reg.id)}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-medium px-2 py-1 rounded hover:bg-rose-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                      onClick={() => setSelectedTicket(reg)}
+                    >
+                      <QrCode className="w-4 h-4" /> View QR Pass
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}

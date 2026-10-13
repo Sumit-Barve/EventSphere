@@ -1,15 +1,19 @@
 import React, { useState } from "react";
-import { Plus, CheckCircle2 } from "lucide-react";
+import { Plus, Calendar, MapPin, CheckCircle2, UserCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { Modal } from "../../components/ui/Modal";
 import { useEvents } from "../../hooks/useEvents";
+import { useApp } from "../../hooks/useApp";
+import { useAuth } from "../../hooks/useAuth";
 
 export function OrganizerDashboard() {
-  // Global Context consumption (useContext) via useEvents hook
-  const { events, addEvent } = useEvents();
+  // Global Context consumption via custom hooks
+  const { organizerEvents, addEvent, registrations } = useEvents();
+  const { activeUser } = useApp();
+  const { user, isAuthenticated, quickLogin } = useAuth();
 
   // Local state for modal open/close and form handling (useState)
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -36,6 +40,7 @@ export function OrganizerDashboard() {
       description: description || "Organizer hosted summit on EventSphere India platform.",
       date: "25 Nov 2026",
       time: "10:00 AM - 05:00 PM IST",
+      organizer: user?.name || activeUser?.name || "DevSphere India Community",
       tags: [category, city, "2026"],
     });
     setCreatedSuccess(true);
@@ -48,23 +53,53 @@ export function OrganizerDashboard() {
     setDescription("");
   };
 
-  // Show active organizer listings
-  const myEvents = events.slice(0, 4);
+  // Dynamically derive recent registrations for events belonging to this organizer
+  const organizerRegistrations = registrations.filter((reg) =>
+    organizerEvents.some((evt) => evt.id === reg.eventId)
+  );
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6">
+      {/* Active Session Warning Banner if not logged in as ORGANIZER/ADMIN */}
+      {(!isAuthenticated || (user?.role !== "ORGANIZER" && user?.role !== "ADMIN")) && (
+        <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200/90 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-indigo-950">Organizer Session Required to Publish & Manage Events</p>
+              <p className="text-xs text-indigo-800">
+                You are currently in unauthenticated preview mode (offline). Sign in as <span className="font-mono font-bold">ORGANIZER</span> to bind events to your account and receive real-time updates.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-indigo-600 hover:bg-indigo-700 whitespace-nowrap text-xs shadow-xs"
+            onClick={() => quickLogin("ORGANIZER")}
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> 1-Click Login as Organizer
+          </Button>
+        </div>
+      )}
+
+      {/* Header with Active Organizer Profile Metadata */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Organizer Workspace (India)</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold text-slate-900">Organizer Workspace (India)</h1>
+            <Badge variant="primary">ID: {user?.id || activeUser?.id || "org-001"}</Badge>
+          </div>
           <p className="text-xs text-slate-500">
-            Manage your campus and corporate event listings, track seat allocations, and scan QR ticket passes.
+            Managing events as <strong>{activeUser?.name || "Aarav Sharma"}</strong> ({activeUser?.email || "aarav.sharma@eventsphere.in"}) • {activeUser?.college || "VESIT Mumbai"}
           </p>
         </div>
         <Button
           variant="primary"
           size="md"
-          className="gap-2"
+          className="gap-2 shadow-sm"
           onClick={() => {
             setCreatedSuccess(false);
             setCreateModalOpen(true);
@@ -75,82 +110,103 @@ export function OrganizerDashboard() {
       </div>
 
       {/* Capacity Utilization Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {myEvents.map((evt) => (
-          <Card key={evt.id} className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <Badge variant="primary">{evt.category}</Badge>
-              <Badge
-                variant={
-                  evt.approvalStatus === "APPROVED"
-                    ? "success"
-                    : evt.approvalStatus === "PENDING"
-                    ? "warning"
-                    : "danger"
-                }
-              >
-                {evt.approvalStatus}
-              </Badge>
-            </div>
-            <h3 className="text-base font-bold text-slate-900 line-clamp-1">{evt.title}</h3>
-            <p className="text-xs text-slate-500">{evt.venue}</p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-900">
+            My Managed Events ({organizerEvents.length})
+          </h2>
+          <span className="text-xs text-slate-400 font-medium">Derived strictly from activeUser.id</span>
+        </div>
 
-            <ProgressBar value={evt.registered} max={evt.capacity} />
-
-            <div className="pt-2 flex items-center justify-between text-xs border-t border-slate-100">
-              <span className="text-slate-500 font-semibold">{evt.price === 0 ? "Free" : `₹${evt.price}`}</span>
-              <button className="text-indigo-600 font-semibold hover:underline">Scan Entry QR</button>
-            </div>
+        {organizerEvents.length === 0 ? (
+          <Card className="p-8 text-center space-y-3">
+            <Calendar className="w-8 h-8 text-slate-400 mx-auto" />
+            <p className="text-sm font-bold text-slate-700">No events found for this organizer</p>
+            <p className="text-xs text-slate-500">Create your first event to submit it for Admin review.</p>
           </Card>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {organizerEvents.map((evt) => (
+              <Card key={evt.id} className="p-5 space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="primary">{evt.category}</Badge>
+                    <Badge
+                      variant={
+                        evt.approvalStatus === "APPROVED"
+                          ? "success"
+                          : evt.approvalStatus === "PENDING"
+                          ? "warning"
+                          : "danger"
+                      }
+                    >
+                      {evt.approvalStatus}
+                    </Badge>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 line-clamp-1">{evt.title}</h3>
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" /> {evt.venue}
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <ProgressBar value={evt.registered} max={evt.capacity} />
+
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 font-semibold">{evt.price === 0 ? "Free Entry" : `₹${evt.price}`}</span>
+                    <span className="text-[11px] font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                      {evt.status}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Recent Attendees List */}
+      {/* Live Registered Attendees List */}
       <Card>
-        <CardHeader>
-          <h2 className="text-base font-bold text-slate-900">Recent Indian Student & Delegate Registrations</h2>
+        <CardHeader className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Live Registered Delegates & Students</h2>
+            <p className="text-xs text-slate-500">Synchronized across EventSphere global registration state.</p>
+          </div>
+          <Badge variant="default">{organizerRegistrations.length} Total Attendees</Badge>
         </CardHeader>
         <CardBody className="p-0 overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-50 font-bold text-slate-700 border-b border-slate-200">
-              <tr>
-                <th className="p-4">Participant Name</th>
-                <th className="p-4">Event Title</th>
-                <th className="p-4">Ticket Pass Code</th>
-                <th className="p-4">Registration Date</th>
-                <th className="p-4">Attendance</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              <tr className="hover:bg-slate-50">
-                <td className="p-4 font-semibold text-slate-900">Aarav Mehta (VESIT)</td>
-                <td className="p-4">India AI & Full Stack Summit 2026</td>
-                <td className="p-4 font-mono text-indigo-600">ES-MUM-2026-901-78X</td>
-                <td className="p-4">10 Aug 2026</td>
-                <td className="p-4">
-                  <Badge variant="success">CHECKED IN</Badge>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-4 font-semibold text-slate-900">Sneha Patil (COEP)</td>
-                <td className="p-4">Mumbai UI/UX DesignMatrix Masterclass</td>
-                <td className="p-4 font-mono text-indigo-600">ES-MUM-2026-902-31Y</td>
-                <td className="p-4">12 Aug 2026</td>
-                <td className="p-4">
-                  <Badge variant="warning">PENDING ENTRY</Badge>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-4 font-semibold text-slate-900">Rohan Kulkarni (VJTI)</td>
-                <td className="p-4">HackMaharashtra 2026: 36-Hour Hackathon</td>
-                <td className="p-4 font-mono text-indigo-600">ES-PUN-2026-903-55K</td>
-                <td className="p-4">18 Aug 2026</td>
-                <td className="p-4">
-                  <Badge variant="success">CHECKED IN</Badge>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          {organizerRegistrations.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-500">
+              No participant registrations recorded yet for your events.
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 font-bold text-slate-700 border-b border-slate-200">
+                <tr>
+                  <th className="p-4">Participant Name</th>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Event Title</th>
+                  <th className="p-4">Ticket Pass Code</th>
+                  <th className="p-4">Attendance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {organizerRegistrations.map((reg) => (
+                  <tr key={reg.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4 font-semibold text-slate-900">{reg.attendeeName}</td>
+                    <td className="p-4 text-slate-500">{reg.attendeeEmail}</td>
+                    <td className="p-4 font-medium text-slate-800">{reg.eventTitle}</td>
+                    <td className="p-4 font-mono text-indigo-600 font-bold">{reg.ticketCode}</td>
+                    <td className="p-4">
+                      <Badge variant={reg.attendanceStatus === "ATTENDED" ? "success" : "warning"}>
+                        {reg.attendanceStatus}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </CardBody>
       </Card>
 

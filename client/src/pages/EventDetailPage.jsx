@@ -28,12 +28,15 @@ export function EventDetailPage() {
 
   // Retrieve event from global context
   const event = getEventById(id) || events[0];
-  const alreadyRegistered = event ? isRegistered(event.id) : false;
+  const alreadyRegistered = event ? isRegistered(event.id, participantEmail) : false;
+  const isSoldOut = event ? event.registered >= event.capacity : false;
 
   const handleRegisterConfirm = () => {
     if (event) {
-      registerForEvent(event.id, { name: participantName, email: participantEmail });
-      setRegisteredSuccess(true);
+      const result = registerForEvent(event.id, { name: participantName, email: participantEmail });
+      if (result && result.success) {
+        setRegisteredSuccess(true);
+      }
     }
   };
 
@@ -188,6 +191,10 @@ export function EventDetailPage() {
                     </Button>
                   </Link>
                 </div>
+              ) : isSoldOut ? (
+                <Button variant="ghost" size="lg" disabled className="w-full bg-slate-100 text-slate-400 cursor-not-allowed">
+                  Event Full (Sold Out)
+                </Button>
               ) : (
                 <Button
                   variant="primary"

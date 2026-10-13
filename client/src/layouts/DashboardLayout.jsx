@@ -13,10 +13,14 @@ import {
   Building,
   Home
 } from "lucide-react";
+import { useApp } from "../hooks/useApp";
+import { useSocket } from "../hooks/useSocket";
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { activeUser } = useApp();
+  const { isConnected, connectionStatus, socketId } = useSocket();
 
   const getRoleFromPath = () => {
     if (location.pathname.includes("/admin")) return { title: "Admin Portal", role: "ADMIN", color: "bg-purple-600", text: "text-purple-600" };
@@ -150,10 +154,10 @@ export function DashboardLayout() {
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
             <div className={`w-9 h-9 rounded-lg ${currentRole.color} flex items-center justify-center text-white font-bold text-sm shadow-xs`}>
-              {currentRole.role[0]}
+              {activeUser?.name ? activeUser.name[0] : currentRole.role[0]}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">Demo Account</p>
+              <p className="text-xs font-semibold text-white truncate">{activeUser?.name || "Demo User"}</p>
               <p className={`text-[10px] font-extrabold uppercase ${currentRole.text}`}>{currentRole.role}</p>
             </div>
           </div>
@@ -170,13 +174,40 @@ export function DashboardLayout() {
             <span className="font-semibold text-slate-900">{currentRole.title}</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <button className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
-              </button>
+          <div className="flex items-center gap-3">
+            {/* Real-time Socket Indicator */}
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-slate-50 border-slate-200"
+              title={
+                isConnected
+                  ? `Real-time WebSocket Live (${socketId || "Active"})`
+                  : connectionStatus === "connecting"
+                  ? "Connecting to real-time server..."
+                  : "Real-time Offline"
+              }
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isConnected
+                    ? "bg-emerald-500 animate-pulse"
+                    : connectionStatus === "connecting"
+                    ? "bg-amber-500 animate-ping"
+                    : "bg-slate-300"
+                }`}
+              />
+              <span
+                className={`text-[10px] font-bold tracking-tight ${
+                  isConnected
+                    ? "text-emerald-700"
+                    : connectionStatus === "connecting"
+                    ? "text-amber-700"
+                    : "text-slate-400"
+                }`}
+              >
+                {isConnected ? "WEBSOCKET LIVE" : connectionStatus === "connecting" ? "SYNCING..." : "OFFLINE"}
+              </span>
             </div>
+
             <div className="h-4 w-[1px] bg-slate-200" />
             <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
               Role: {currentRole.role}

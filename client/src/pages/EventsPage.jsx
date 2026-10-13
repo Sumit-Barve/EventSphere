@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter, Grid, List, MapPin, Clock, RotateCcw } from "lucide-react";
+import { Search, Filter, Grid, List, MapPin, Clock, RotateCcw, AlertCircle } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Card, CardBody } from "../components/ui/Card";
@@ -18,7 +18,9 @@ export function EventsPage() {
     setSelectedCategory,
     setSearchQuery,
     resetFilters,
-    isLoading
+    isLoading,
+    apiError,
+    fetchEvents
   } = useEvents();
 
   // Custom Hook: Persistent UI preference via localStorage (useState + useEffect)
@@ -135,8 +137,24 @@ export function EventsPage() {
         )}
       </div>
 
-      {/* Loading Skeletons */}
-      {isLoading ? (
+      {/* API Error State */}
+      {apiError ? (
+        <Card className="p-12 text-center space-y-4 border-red-200 bg-red-50/30">
+          <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">Database / REST API Connection Error</h3>
+          <p className="text-xs text-red-600 max-w-sm mx-auto">
+            {apiError}
+          </p>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Please ensure MongoDB and the Express backend server (port 5000) are running.
+          </p>
+          <Button variant="primary" size="sm" onClick={fetchEvents} className="gap-1.5">
+            <RotateCcw className="w-3.5 h-3.5" /> Retry Fetching from MongoDB
+          </Button>
+        </Card>
+      ) : isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((n) => (
             <div

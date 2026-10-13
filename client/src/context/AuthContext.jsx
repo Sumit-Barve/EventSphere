@@ -12,7 +12,13 @@ export function useAuth() {
 
 const TOKEN_KEY = "eventsphere_token";
 const USER_KEY = "eventsphere_user";
-const AUTH_API_BASE = "http://localhost:5000/api/auth";
+
+// Resolve API base URL dynamically with local development fallback
+const RAW_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const CLEAN_API_BASE = RAW_API_URL.replace(/\/+$/, "");
+const AUTH_API_BASE = CLEAN_API_BASE.endsWith("/api")
+  ? `${CLEAN_API_BASE}/auth`
+  : `${CLEAN_API_BASE}/api/auth`;
 
 export const DEMO_CREDENTIALS = {
   ADMIN: {

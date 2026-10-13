@@ -6,7 +6,12 @@ import { useSocket } from "../hooks/useSocket";
 
 export const EventContext = createContext(null);
 
-const API_BASE_URL = "http://localhost:5000/api/events";
+// Resolve API base URL dynamically with local development fallback
+const RAW_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const CLEAN_API_BASE = RAW_API_URL.replace(/\/+$/, "");
+const API_BASE_URL = CLEAN_API_BASE.endsWith("/api")
+  ? `${CLEAN_API_BASE}/events`
+  : `${CLEAN_API_BASE}/api/events`;
 
 /**
  * EventProvider manages platform-wide event state, registrations, and lifecycle.

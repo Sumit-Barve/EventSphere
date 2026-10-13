@@ -5,7 +5,9 @@ import { useApp } from "../hooks/useApp";
 
 export const SocketContext = createContext(null);
 
-const SOCKET_SERVER_URL = "http://localhost:5000";
+// Resolve Socket.IO server origin dynamically with local development fallback
+const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+const SOCKET_SERVER_URL = RAW_SOCKET_URL.replace(/\/+$/, "");
 
 export function SocketProvider({ children }) {
   const { token, isAuthenticated, user } = useAuth();

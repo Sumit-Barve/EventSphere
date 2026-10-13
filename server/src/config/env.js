@@ -9,8 +9,30 @@ dotenv.config();
 const validateEnv = () => {
   const NODE_ENV = process.env.NODE_ENV || "development";
   const PORT = parseInt(process.env.PORT || "5000", 10);
-  const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/eventsphere";
-  const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+  const rawClientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  // Support comma-separated origins (e.g. for production Vercel + custom domain or preview URLs)
+  const configuredOrigins = rawClientUrl
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+
+  // Default origins for local development
+  const localDevOrigins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5173",
+  ];
+
+  // In development, allow local development ports; in production, restrict strictly to configured origins
+  const allowedOrigins = Array.from(
+    new Set([
+      ...configuredOrigins,
+      ...(NODE_ENV === "development" ? localDevOrigins : []),
+    ])
+  );
+
+  const CLIENT_URL = configuredOrigins[0] || "http://localhost:5173";
   const JWT_SECRET = process.env.JWT_SECRET || "eventsphere_super_secure_jwt_secret_key_2026_practical6";
   const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
 
@@ -45,6 +67,7 @@ const validateEnv = () => {
     PORT,
     MONGO_URI,
     CLIENT_URL,
+    allowedOrigins,
     JWT_SECRET,
     JWT_EXPIRES_IN,
     SMTP_HOST,

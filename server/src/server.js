@@ -30,9 +30,21 @@ connectDB();
 app.use(helmet());
 
 // 3. CORS Configuration
+const isOriginAllowed = (origin) => {
+  // Allow requests with no Origin header (e.g., uptime/health probes, curl, server-to-server)
+  if (!origin) return true;
+  return env.allowedOrigins.includes(origin);
+};
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS error: Origin '${origin}' is not allowed`));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

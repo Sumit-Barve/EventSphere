@@ -10,7 +10,14 @@ let io = null;
 export const initializeSocketIO = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: env.CLIENT_URL,
+      origin: (origin, callback) => {
+        // Allow requests with no Origin header (health probes, server-to-server)
+        if (!origin || env.allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Socket.IO CORS error: Origin '${origin}' is not allowed`));
+        }
+      },
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization"],

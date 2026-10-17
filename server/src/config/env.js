@@ -9,6 +9,7 @@ dotenv.config();
 const validateEnv = () => {
   const NODE_ENV = process.env.NODE_ENV || "development";
   const PORT = parseInt(process.env.PORT || "5000", 10);
+  const MONGO_URI = process.env.MONGO_URI || "";
   const rawClientUrl = process.env.CLIENT_URL || "http://localhost:5173";
   // Support comma-separated origins (e.g. for production Vercel + custom domain or preview URLs)
   const configuredOrigins = rawClientUrl

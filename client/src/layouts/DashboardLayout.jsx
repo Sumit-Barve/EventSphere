@@ -8,18 +8,22 @@ import {
   Ticket,
   Menu,
   X,
-  Bell,
   ChevronRight,
   Building,
-  Home
+  Home,
+  LogOut
 } from "lucide-react";
 import { useApp } from "../hooks/useApp";
+import { useAuth } from "../hooks/useAuth";
 import { useSocket } from "../hooks/useSocket";
+import { useNavigate } from "react-router-dom";
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { activeUser } = useApp();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { showToast } = useApp();
   const { isConnected, connectionStatus, socketId } = useSocket();
 
   const getRoleFromPath = () => {
@@ -28,7 +32,21 @@ export function DashboardLayout() {
     return { title: "Participant Dashboard", role: "PARTICIPANT", color: "bg-emerald-600", text: "text-emerald-600" };
   };
 
+  const getRoleBadge = (role) => {
+    switch (role) {
+      case "ADMIN":
+        return { color: "bg-purple-600", text: "text-purple-400" };
+      case "ORGANIZER":
+        return { color: "bg-indigo-600", text: "text-indigo-400" };
+      case "PARTICIPANT":
+        return { color: "bg-emerald-600", text: "text-emerald-400" };
+      default:
+        return { color: "bg-slate-700", text: "text-slate-400" };
+    }
+  };
+
   const currentRole = getRoleFromPath();
+  const activeRoleBadge = getRoleBadge(user?.role);
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row">
@@ -153,13 +171,30 @@ export function DashboardLayout() {
         {/* Sidebar Footer User Info */}
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50">
-            <div className={`w-9 h-9 rounded-lg ${currentRole.color} flex items-center justify-center text-white font-bold text-sm shadow-xs`}>
-              {activeUser?.name ? activeUser.name[0] : currentRole.role[0]}
+            <div className={`w-9 h-9 rounded-lg ${isAuthenticated && user ? activeRoleBadge.color : "bg-slate-700"} flex items-center justify-center text-white font-bold text-sm shadow-xs`}>
+              {isAuthenticated && user?.name ? user.name[0].toUpperCase() : (user?.role ? user.role[0] : "G")}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{activeUser?.name || "Demo User"}</p>
-              <p className={`text-[10px] font-extrabold uppercase ${currentRole.text}`}>{currentRole.role}</p>
+              <p className="text-xs font-semibold text-white truncate">
+                {isAuthenticated && user?.name ? user.name : "Guest User"}
+              </p>
+              <p className={`text-[10px] font-extrabold uppercase ${isAuthenticated && user ? activeRoleBadge.text : "text-slate-400"}`}>
+                {isAuthenticated && user?.role ? user.role : "GUEST"}
+              </p>
             </div>
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  logout();
+                  showToast("Signed out successfully.", "info");
+                  navigate("/login");
+                }}
+                title="Sign Out"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -210,7 +245,7 @@ export function DashboardLayout() {
 
             <div className="h-4 w-[1px] bg-slate-200" />
             <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-              Role: {currentRole.role}
+              Role: {isAuthenticated && user?.role ? user.role : currentRole.role}
             </span>
           </div>
         </header>

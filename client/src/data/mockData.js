@@ -214,6 +214,7 @@ export const MOCK_REGISTRATIONS = [
   {
     id: "reg-901",
     eventId: "evt-101",
+    userId: "6ab24f514d9120930aa789ec",
     eventTitle: "India AI & Full Stack Summit 2026",
     eventDate: "15 Sep 2026",
     venue: "Jio World Convention Centre - Hall 3, BKC, Mumbai",
@@ -224,11 +225,12 @@ export const MOCK_REGISTRATIONS = [
     attendanceStatus: "ATTENDED",
     certificateEligible: true,
     attendeeName: "Aarav Mehta",
-    attendeeEmail: "aarav.mehta@ves.ac.in",
+    attendeeEmail: "participant@eventsphere.local",
   },
   {
     id: "reg-902",
     eventId: "evt-102",
+    userId: "part-002",
     eventTitle: "Mumbai UI/UX DesignMatrix Masterclass",
     eventDate: "22 Sep 2026",
     venue: "VESIT Auditorium & Innovation Lab, Chembur, Mumbai",

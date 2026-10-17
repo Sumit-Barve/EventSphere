@@ -15,25 +15,34 @@ import { Card, CardBody, CardHeader } from "../components/ui/Card";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { Modal } from "../components/ui/Modal";
 import { useEvents } from "../hooks/useEvents";
+import { useAuth } from "../hooks/useAuth";
 
 export function EventDetailPage() {
   const { id } = useParams();
   const { events, getEventById, registerForEvent, isRegistered } = useEvents();
+  const { user } = useAuth();
 
   // Local state for modal & registration form inputs (useState)
   const [modalOpen, setModalOpen] = useState(false);
   const [registeredSuccess, setRegisteredSuccess] = useState(false);
-  const [participantName, setParticipantName] = useState("Aarav Mehta");
-  const [participantEmail, setParticipantEmail] = useState("aarav.mehta@ves.ac.in");
+  const [customName, setCustomName] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
+
+  const participantName = customName !== "" ? customName : (user?.name || "");
+  const participantEmail = customEmail !== "" ? customEmail : (user?.email || "");
 
   // Retrieve event from global context
   const event = getEventById(id) || events[0];
-  const alreadyRegistered = event ? isRegistered(event.id, participantEmail) : false;
+  const currentCheckEmail = user?.email || participantEmail;
+  const alreadyRegistered = event && currentCheckEmail ? isRegistered(event.id, currentCheckEmail) : false;
   const isSoldOut = event ? event.registered >= event.capacity : false;
 
   const handleRegisterConfirm = () => {
     if (event) {
-      const result = registerForEvent(event.id, { name: participantName, email: participantEmail });
+      const result = registerForEvent(event.id, {
+        name: participantName || user?.name || "Participant",
+        email: participantEmail || user?.email,
+      });
       if (result && result.success) {
         setRegisteredSuccess(true);
       }
@@ -241,7 +250,7 @@ export function EventDetailPage() {
                 <input
                   type="text"
                   value={participantName}
-                  onChange={(e) => setParticipantName(e.target.value)}
+                  onChange={(e) => setCustomName(e.target.value)}
                   className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"
                   required
                 />
@@ -252,7 +261,7 @@ export function EventDetailPage() {
                 <input
                   type="email"
                   value={participantEmail}
-                  onChange={(e) => setParticipantEmail(e.target.value)}
+                  onChange={(e) => setCustomEmail(e.target.value)}
                   className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white"
                   required
                 />

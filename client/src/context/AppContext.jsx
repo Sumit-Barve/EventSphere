@@ -11,13 +11,22 @@ export const DEFAULT_MOCK_USER = {
   college: "VESIT Mumbai",
 };
 
+const getInitialActiveUser = () => {
+  try {
+    const saved = localStorage.getItem("eventsphere_user");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * AppProvider manages application-wide concerns:
- * 1. Active mock user profile (deterministic organizer/user identity)
+ * 1. Active user profile (synchronized with authenticated session)
  * 2. Global notification/toast system (reactive feedback across components)
  */
 export function AppProvider({ children }) {
-  const [activeUser, setActiveUser] = useState(DEFAULT_MOCK_USER);
+  const [activeUser, setActiveUser] = useState(getInitialActiveUser);
   const [toasts, setToasts] = useState([]);
 
   // Remove toast by id

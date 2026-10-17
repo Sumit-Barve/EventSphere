@@ -93,7 +93,7 @@ export function OrganizerDashboard() {
             <Badge variant="primary">ID: {user?.id || activeUser?.id || "org-001"}</Badge>
           </div>
           <p className="text-xs text-slate-500">
-            Managing events as <strong>{activeUser?.name || "Aarav Sharma"}</strong> ({activeUser?.email || "aarav.sharma@eventsphere.in"}) • {activeUser?.college || "VESIT Mumbai"}
+            Managing events as <strong>{user?.name || activeUser?.name || "Organizer"}</strong> ({user?.email || activeUser?.email || "organizer@eventsphere.local"}) • {user?.city || activeUser?.city || activeUser?.college || "Mumbai"}
           </p>
         </div>
         <Button

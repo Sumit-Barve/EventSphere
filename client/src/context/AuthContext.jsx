@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useApp } from "../hooks/useApp";
 
 export const AuthContext = createContext(null);
 
@@ -45,6 +46,7 @@ export const DEMO_CREDENTIALS = {
 };
 
 export function AuthProvider({ children }) {
+  const { setActiveUser } = useApp();
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || null);
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem(USER_KEY);
@@ -77,6 +79,7 @@ export function AuthProvider({ children }) {
           const data = await res.json();
           if (data.success && data.data?.user) {
             setUser(data.data.user);
+            setActiveUser?.(data.data.user);
             localStorage.setItem(USER_KEY, JSON.stringify(data.data.user));
           }
         } else {
@@ -85,6 +88,7 @@ export function AuthProvider({ children }) {
           localStorage.removeItem(USER_KEY);
           setToken(null);
           setUser(null);
+          setActiveUser?.(null);
         }
       } catch (err) {
         console.error("[AuthContext] Verification error:", err);
@@ -94,7 +98,7 @@ export function AuthProvider({ children }) {
     };
 
     verifyToken();
-  }, []);
+  }, [setActiveUser]);
 
   // Login handler
   const login = useCallback(async (email, password) => {
@@ -122,13 +126,14 @@ export function AuthProvider({ children }) {
 
       setToken(receivedToken);
       setUser(receivedUser);
+      setActiveUser?.(receivedUser);
 
       return { success: true, user: receivedUser, token: receivedToken };
     } catch (err) {
       setAuthError(err.message);
       return { success: false, message: err.message };
     }
-  }, []);
+  }, [setActiveUser]);
 
   // Register handler
   const register = useCallback(async ({ name, email, password, role = "PARTICIPANT", city = "Mumbai" }) => {
@@ -157,13 +162,14 @@ export function AuthProvider({ children }) {
 
       setToken(receivedToken);
       setUser(receivedUser);
+      setActiveUser?.(receivedUser);
 
       return { success: true, user: receivedUser, token: receivedToken };
     } catch (err) {
       setAuthError(err.message);
       return { success: false, message: err.message };
     }
-  }, []);
+  }, [setActiveUser]);
 
   // Quick Demo Login for Faculty Demonstration
   const quickLogin = useCallback(
@@ -181,8 +187,9 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(USER_KEY);
     setToken(null);
     setUser(null);
+    setActiveUser?.(null);
     setAuthError(null);
-  }, []);
+  }, [setActiveUser]);
 
   const value = {
     user,

@@ -26,7 +26,22 @@ export function EventProvider({ children }) {
 
   // Core application state
   const [events, setEvents] = useState([]);
-  const [registrations, setRegistrations] = useState(MOCK_REGISTRATIONS);
+  const [registrations, setRegistrations] = useState(() => {
+    try {
+      const saved = localStorage.getItem("eventsphere_registrations");
+      return saved ? JSON.parse(saved) : MOCK_REGISTRATIONS;
+    } catch {
+      return MOCK_REGISTRATIONS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("eventsphere_registrations", JSON.stringify(registrations));
+    } catch (e) {
+      console.warn("[EventContext] Error saving registrations to localStorage:", e);
+    }
+  }, [registrations]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [isLoading, setIsLoading] = useState(true);
@@ -181,10 +196,16 @@ export function EventProvider({ children }) {
     return events.filter((evt) => evt.approvalStatus === "REJECTED");
   }, [events]);
 
-  // 4. Organizer events (Strictly scoped by logged-in organizer id or fallback)
+  // 4. Organizer events (Strictly scoped by logged-in organizer identity)
   const organizerEvents = useMemo(() => {
-    const currentOrganizerId = authUser?.id || activeUser?.id || "org-001";
-    return events.filter((evt) => evt.organizerId === currentOrganizerId);
+    const currentOrganizerId = authUser?.id || activeUser?.id;
+    return events.filter((evt) => {
+      if (currentOrganizerId && (evt.organizerId === currentOrganizerId || evt.organizerId === authUser?.id)) return true;
+      if (authUser?.email === "organizer@eventsphere.local" && (evt.organizerId === "org-001" || evt.organizerId === authUser?.id)) return true;
+      if (authUser?.name && evt.organizer === authUser.name) return true;
+      if (!authUser && evt.organizerId === "org-001") return true;
+      return false;
+    });
   }, [events, authUser, activeUser]);
 
   // 5. Filtered public events (Dynamic search + category filter over approvedEvents)
@@ -220,6 +241,23 @@ export function EventProvider({ children }) {
       };
     });
   }, [registrations, events]);
+
+  // 6b. Participant-scoped registrations (Strictly filtered by authenticated user's ID or email)
+  const userRegistrations = useMemo(() => {
+    if (!authUser) return [];
+    const authId = authUser.id || authUser._id;
+    const authEmail = (authUser.email || "").trim().toLowerCase();
+    return registrations.filter((reg) => {
+      const matchesId = Boolean(authId && reg.userId && (reg.userId === authId));
+      const matchesEmail = Boolean(
+        authEmail &&
+        reg.attendeeEmail &&
+        (reg.attendeeEmail.trim().toLowerCase() === authEmail ||
+          (authEmail === "participant@eventsphere.local" && reg.attendeeEmail.trim().toLowerCase() === "aarav.mehta@ves.ac.in"))
+      );
+      return matchesId || matchesEmail;
+    });
+  }, [registrations, authUser]);
 
   // 7. Dynamic aggregate statistics computed from live state
   const stats = useMemo(() => {
@@ -452,17 +490,28 @@ export function EventProvider({ children }) {
 
       const attendeeEmail = (
         userData.email ||
+        authUser?.email ||
         activeUser?.email ||
-        "aarav.mehta@ves.ac.in"
+        ""
       )
         .trim()
         .toLowerCase();
+
+      const attendeeName = (
+        userData.name ||
+        authUser?.name ||
+        activeUser?.name ||
+        "Participant"
+      ).trim();
 
       // 3. Prevent duplicate registration
       const alreadyRegistered = registrations.some(
         (reg) =>
           reg.eventId === (targetEvent.id || targetEvent._id) &&
-          reg.attendeeEmail.trim().toLowerCase() === attendeeEmail
+          (
+            (reg.userId && authUser?.id && (reg.userId === authUser.id || reg.userId === authUser._id)) ||
+            (reg.attendeeEmail && attendeeEmail && reg.attendeeEmail.trim().toLowerCase() === attendeeEmail)
+          )
       );
 
       if (alreadyRegistered) {
@@ -500,16 +549,17 @@ export function EventProvider({ children }) {
       const newRegistration = {
         id: `reg-${Date.now()}`,
         eventId: targetEvent.id || targetEvent._id,
+        userId: authUser?.id || "",
         eventTitle: targetEvent.title,
         eventDate: targetEvent.date,
         venue: targetEvent.venue,
         ticketCode: `ES-MUM-2026-${ticketSuffix}-REG`,
-        qrData: `EVENTSPHERE-TICKET-ES-MUM-2026-${ticketSuffix}-${attendeeEmail.toUpperCase()}`,
+        qrData: `EVENTSPHERE-TICKET-ES-MUM-2026-${ticketSuffix}-${attendeeEmail ? attendeeEmail.toUpperCase() : "PARTICIPANT"}`,
         registeredAt: "Today",
         status: "CONFIRMED",
         attendanceStatus: "PENDING",
         certificateEligible: false,
-        attendeeName: userData.name || activeUser?.name || "Aarav Mehta",
+        attendeeName: attendeeName,
         attendeeEmail: attendeeEmail,
       };
 
@@ -518,7 +568,7 @@ export function EventProvider({ children }) {
 
       return { success: true, registration: newRegistration };
     },
-    [events, registrations, activeUser, showToast]
+    [events, registrations, authUser, activeUser, getAuthHeaders, showToast]
   );
 
   // Participant Action: Cancel registration
@@ -552,19 +602,23 @@ export function EventProvider({ children }) {
     (eventId, userEmail) => {
       const emailToCheck = (
         userEmail ||
+        authUser?.email ||
         activeUser?.email ||
-        "aarav.mehta@ves.ac.in"
+        ""
       )
         .trim()
         .toLowerCase();
 
       return registrations.some(
         (reg) =>
-          (reg.eventId === eventId) &&
-          reg.attendeeEmail.trim().toLowerCase() === emailToCheck
+          reg.eventId === eventId &&
+          (
+            (reg.userId && authUser?.id && (reg.userId === authUser.id || reg.userId === authUser._id)) ||
+            (reg.attendeeEmail && emailToCheck && reg.attendeeEmail.trim().toLowerCase() === emailToCheck)
+          )
       );
     },
-    [registrations, activeUser]
+    [registrations, authUser, activeUser]
   );
 
   // Helper: Retrieve single event by id
@@ -585,6 +639,7 @@ export function EventProvider({ children }) {
     // Raw state
     events,
     registrations,
+    userRegistrations,
     searchQuery,
     setSearchQuery,
     selectedCategory,

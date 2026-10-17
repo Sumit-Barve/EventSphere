@@ -1,23 +1,55 @@
 import React, { useState } from "react";
-import { QrCode, Award, CheckCircle2, Calendar, MapPin, Download } from "lucide-react";
+import { QrCode, Award, CheckCircle2, Calendar, MapPin, Download, UserCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { useEvents } from "../../hooks/useEvents";
+import { useAuth } from "../../hooks/useAuth";
 
 export function ParticipantDashboard() {
-  // Global Context consumption (useContext) via useEvents hook
-  const { registrations, cancelRegistration } = useEvents();
+  // Global Context consumption (useContext) via custom hooks
+  const { userRegistrations = [], cancelRegistration } = useEvents();
+  const { user, isAuthenticated, quickLogin } = useAuth();
 
   // Local state for modal preview of selected QR ticket (useState)
   const [selectedTicket, setSelectedTicket] = useState(null);
 
   return (
     <div className="space-y-8">
+      {/* Active Session Warning Banner if not logged in as PARTICIPANT */}
+      {!isAuthenticated && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200/90 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-950">Participant Session Required to View Your Passes</p>
+              <p className="text-xs text-emerald-800">
+                You are currently in unauthenticated preview mode. Sign in to access your personalized entry tickets, QR passes, and certificates.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 whitespace-nowrap text-xs shadow-xs"
+            onClick={() => quickLogin("PARTICIPANT")}
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> 1-Click Login as Participant
+          </Button>
+        </div>
+      )}
+
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Participant Dashboard</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-2xl font-bold text-slate-900">Participant Dashboard</h1>
+          {isAuthenticated && user && (
+            <Badge variant="success">{user.name} ({user.role})</Badge>
+          )}
+        </div>
         <p className="text-xs text-slate-500">
           Access your digital entry passes, QR codes, and event attendance certificates.
         </p>
@@ -27,18 +59,18 @@ export function ParticipantDashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-slate-900">
-            My Registered Event Passes ({registrations.length})
+            My Registered Event Passes ({userRegistrations.length})
           </h2>
           <span className="text-xs text-slate-400 font-medium">Instant QR verification enabled</span>
         </div>
 
-        {registrations.length === 0 ? (
+        {userRegistrations.length === 0 ? (
           <Card className="p-8 text-center text-slate-500 text-xs">
             You have not registered for any events yet. Explore events on the Discover page.
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {registrations.map((reg) => (
+            {userRegistrations.map((reg) => (
               <Card key={reg.id} className="p-5 border-l-4 border-l-indigo-600 space-y-4 flex flex-col justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -107,36 +139,44 @@ export function ParticipantDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {registrations.map((reg) => (
-                <tr key={reg.id} className="hover:bg-slate-50">
-                  <td className="p-4 font-semibold text-slate-900">{reg.eventTitle}</td>
-                  <td className="p-4">
-                    <Badge variant={reg.attendanceStatus === "ATTENDED" ? "success" : "warning"}>
-                      {reg.attendanceStatus}
-                    </Badge>
-                  </td>
-                  <td className="p-4">
-                    {reg.certificateEligible ? (
-                      <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> ELIGIBLE
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 italic">Unlocks after event attendance</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    {reg.certificateEligible ? (
-                      <Button variant="emerald" size="sm" className="gap-1">
-                        <Download className="w-3.5 h-3.5" /> Download Certificate
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="sm" disabled>
-                        Locked
-                      </Button>
-                    )}
+              {userRegistrations.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-slate-400 italic">
+                    No attendance certificates available yet. Attend registered events to unlock official certificates.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                userRegistrations.map((reg) => (
+                  <tr key={reg.id} className="hover:bg-slate-50">
+                    <td className="p-4 font-semibold text-slate-900">{reg.eventTitle}</td>
+                    <td className="p-4">
+                      <Badge variant={reg.attendanceStatus === "ATTENDED" ? "success" : "warning"}>
+                        {reg.attendanceStatus}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      {reg.certificateEligible ? (
+                        <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> ELIGIBLE
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 italic">Unlocks after event attendance</span>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      {reg.certificateEligible ? (
+                        <Button variant="emerald" size="sm" className="gap-1">
+                          <Download className="w-3.5 h-3.5" /> Download Certificate
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" disabled>
+                          Locked
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </CardBody>
